@@ -8,16 +8,19 @@ module Scenes.Garden exposing
     , view
     )
 
+import Browser.Dom as Dom
 import Context exposing (Context)
 import Css.Animation as Animation
 import Css.Color as Color
 import Css.Style as Style exposing (..)
-import Data.Board.Tile exposing (seedName)
+import Data.Board.Tile exposing (seedName, seedTypeHash)
 import Data.Board.Types exposing (SeedType(..))
 import Data.Window exposing (Window)
-import Exit exposing (exit)
-import Html exposing (Html, div, p, text)
-import Html.Attributes exposing (class)
+import Exit exposing (continue, exit)
+import Helpers.Delay exposing (after)
+import Html exposing (Html, div, label, p, text)
+import Html.Attributes exposing (class, id)
+import Task
 import Views.Flowers.All exposing (renderFlower)
 import Views.Seed.All exposing (renderSeed)
 import Worlds
@@ -33,6 +36,8 @@ type alias Model =
 
 type Msg
     = ExitToHub
+    | ScrollToCurrentCompletedWorld
+    | DomNoOp (Result Dom.Error ())
 
 
 
@@ -55,7 +60,7 @@ updateContext f model =
 
 init : Context -> ( Model, Cmd Msg )
 init context =
-    ( initialState context, Cmd.none )
+    ( initialState context, after 500 ScrollToCurrentCompletedWorld )
 
 
 initialState : Context -> Model
@@ -73,6 +78,23 @@ update msg model =
         ExitToHub ->
             exit model
 
+        ScrollToCurrentCompletedWorld ->
+            continue model [ scrollToCurrentCompletedWorld model ]
+
+        DomNoOp _ ->
+            continue model []
+
+
+scrollToCurrentCompletedWorld model =
+    seedTypeHash Chrysanthemum
+        |> Dom.getElement
+        |> Task.andThen scrollWorldToView
+        |> Task.attempt DomNoOp
+
+
+scrollWorldToView { element, viewport } =
+    Dom.setViewportOf "flowers" 0 <| element.y - viewport.height / 2 + element.height / 2
+
 
 
 -- View
@@ -82,8 +104,17 @@ view : Model -> Html Msg
 view model =
     div [ class "w-100 z-1" ]
         [ initialOverlay model.context.window
-        , div [ class "w-100 absolute overflow-y-scroll momentum-scroll z-2" ]
-            [ div [ style [ marginTop 50, marginBottom 50 ], class "flex flex-column items-center" ] allFlowers ]
+        , div
+            [ id "flowers"
+            , style [ height <| toFloat model.context.window.height ]
+            , class "w-100 fixed overflow-y-scroll momentum-scroll z-2"
+            ]
+            [ div
+                [ style [ marginTop 50, marginBottom 50 ]
+                , class "flex flex-column items-center"
+                ]
+                allFlowers
+            ]
         ]
 
 
@@ -95,7 +126,7 @@ initialOverlay window =
             , height <| toFloat window.height
             , Animation.animation "fade-out" 1000 [ Animation.linear, Animation.delay 2500 ]
             ]
-        , class "w-100 ttu tracked-mega f3 z-3 fixed flex items-center justify-center"
+        , class "w-100 ttu tracked-mega f3 z-3 fixed flex items-center justify-center touch-disabled"
         ]
         [ p
             [ style
@@ -117,7 +148,8 @@ allFlowers =
 
 worldFlowers seedType =
     div
-        [ style
+        [ id <| seedTypeHash seedType
+        , style
             [ marginTop 50
             , marginBottom 50
             ]
