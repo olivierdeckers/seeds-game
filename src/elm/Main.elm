@@ -246,7 +246,7 @@ exitTitle model destination =
             ( model, trigger InitIntro )
 
         Title.ToGarden ->
-            ( model, loadGarden )
+            ( model, goToGarden )
 
 
 
@@ -289,7 +289,7 @@ exitHub model destination =
             handleStartLevel model level
 
         Hub.ToGarden ->
-            ( model, loadGarden )
+            ( model, goToGarden )
 
 
 handleStartLevel : Model -> Levels.Key -> ( Model, Cmd Msg )
@@ -412,9 +412,14 @@ updateSummary =
     updateScene Summary SummaryMsg Summary.update |> Exit.onExit exitSummary
 
 
-exitSummary : Model -> () -> ( Model, Cmd Msg )
-exitSummary model _ =
-    ( clearBackdrop model, goToHubReachedLevel model )
+exitSummary : Model -> Summary.Destination -> ( Model, Cmd Msg )
+exitSummary model destination =
+    case destination of
+        Summary.ToHub ->
+            ( clearBackdrop model, goToHubReachedLevel model )
+
+        Summary.ToGarden ->
+            ( clearBackdrop model, trigger InitGarden )
 
 
 
@@ -507,9 +512,13 @@ syncContext model scene =
 -- Misc
 
 
-loadGarden : Cmd Msg
-loadGarden =
-    withLoadingScreen InitGarden
+goToGarden : Cmd Msg
+goToGarden =
+    Delay.sequence
+        [ ( 0, ShowLoadingScreen )
+        , ( 3000, HideLoadingScreen )
+        , ( 0, InitGarden )
+        ]
 
 
 reloadCurrentLevel : Model -> Cmd Msg
