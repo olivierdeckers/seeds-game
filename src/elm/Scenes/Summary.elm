@@ -304,16 +304,16 @@ getBackgroundFor : SeedType -> Color
 getBackgroundFor seedType =
     case seedType of
         Sunflower ->
-            Color.meadowGreen
+            Sunflower.background
 
         Chrysanthemum ->
-            Color.purple
+            Chrysanthemum.background
 
         Cornflower ->
-            "rgb(16, 154, 217)"
+            Cornflower.background
 
         _ ->
-            Color.meadowGreen
+            Sunflower.background
 
 
 

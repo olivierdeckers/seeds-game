@@ -14,6 +14,7 @@ import Context exposing (Context)
 import Css.Animation as Animation
 import Css.Color as Color exposing (rgb)
 import Css.Style as Style exposing (..)
+import Css.Transition as Transition
 import Data.Board.Tile exposing (seedName, seedTypeHash)
 import Data.Board.Types exposing (SeedType(..))
 import Data.Levels as Levels exposing (WorldConfig)
@@ -21,11 +22,16 @@ import Data.Progress as Progress exposing (Progress)
 import Data.Window exposing (Window)
 import Exit exposing (continue, exit)
 import Helpers.Delay exposing (after)
-import Html exposing (Html, button, div, label, p, text)
+import Html exposing (Html, button, div, label, p, span, text)
 import Html.Attributes exposing (class, id)
 import Html.Events exposing (onClick)
+import Html.Keyed as Keyed
+import Scenes.Summary.Chrysanthemum as Chrysanthemum
+import Scenes.Summary.Cornflower as Cornflower
+import Scenes.Summary.Sunflower as Sunflower
 import Task exposing (Task)
 import Views.Flowers.All exposing (renderFlower)
+import Views.Icons.Cross exposing (cross)
 import Views.Menu as Menu
 import Views.Seed.All exposing (renderSeed)
 import Views.Seed.Mono exposing (greyedOutSeed)
@@ -37,13 +43,27 @@ import Worlds
 
 
 type alias Model =
-    { context : Context }
+    { context : Context
+    , selectedFlower : SeedType
+    , flowerVisibility : FlowerVisibility
+    }
 
 
 type Msg
     = ScrollToCurrentCompletedWorld
     | DomNoOp (Result Dom.Error ())
+    | SelectFlower SeedType
+    | ShowFlower
+    | HideFlower
+    | ClearFlower
     | ExitToHub
+
+
+type FlowerVisibility
+    = Hidden
+    | Entering
+    | Leaving
+    | Visible
 
 
 
@@ -77,7 +97,10 @@ init context =
 
 initialState : Context -> Model
 initialState context =
-    { context = context }
+    { context = context
+    , selectedFlower = Sunflower
+    , flowerVisibility = Hidden
+    }
 
 
 
@@ -92,6 +115,18 @@ update msg model =
 
         DomNoOp _ ->
             continue model []
+
+        SelectFlower seedType ->
+            continue { model | selectedFlower = seedType, flowerVisibility = Entering } [ after 100 ShowFlower ]
+
+        ShowFlower ->
+            continue { model | flowerVisibility = Visible } []
+
+        HideFlower ->
+            continue { model | flowerVisibility = Leaving } [ after 1000 ClearFlower ]
+
+        ClearFlower ->
+            continue { model | flowerVisibility = Hidden } []
 
         ExitToHub ->
             exit model
@@ -142,6 +177,7 @@ view : Model -> Html Msg
 view model =
     div [ class "w-100 z-1" ]
         [ initialOverlay model.context.window
+        , div [ class "z-7 absolute top-0" ] [ renderSelectedFlower model ]
         , div
             [ id "flowers"
             , style [ height <| toFloat model.context.window.height ]
@@ -193,14 +229,14 @@ backToLevelsButton =
         ]
 
 
-allFlowers : Progress -> List (Html msg)
+allFlowers : Progress -> List (Html Msg)
 allFlowers progress =
     Worlds.list
         |> List.reverse
         |> List.map (worldFlowers progress)
 
 
-worldFlowers : Progress -> ( WorldConfig, List Levels.Key ) -> Html msg
+worldFlowers : Progress -> ( WorldConfig, List Levels.Key ) -> Html Msg
 worldFlowers progress ( { seedType }, levelKeys ) =
     if worldComplete progress levelKeys then
         div
@@ -209,6 +245,8 @@ worldFlowers progress ( { seedType }, levelKeys ) =
                 [ marginTop 50
                 , marginBottom 50
                 ]
+            , class "relative pointer"
+            , onClick <| SelectFlower seedType
             ]
             [ flowers seedType
             , seeds seedType
@@ -266,8 +304,8 @@ flowers seedType =
     in
     div [ class "flex items-end justify-center relative" ]
         [ div [ style [ marginRight spacing.offsetX ] ] [ flower spacing.small seedType ]
-        , div [ style [ marginBottom spacing.offsetY ] ] [ flower spacing.large seedType ]
-        , div [ style [ marginLeft spacing.offsetX ] ] [ flower spacing.small seedType ]
+        , div [ style [ marginBottom spacing.offsetY ], class "relative" ] [ flower spacing.large seedType ]
+        , div [ style [ marginLeft spacing.offsetX ], class "relative" ] [ flower spacing.small seedType ]
         ]
 
 
@@ -281,8 +319,109 @@ sized size element =
     div [ style [ width size, height size ] ] [ element ]
 
 
+renderSelectedFlower model =
+    let
+        window =
+            model.context.window
 
--- Spacing
+        flowerLayer =
+            getFlowerLayer model.selectedFlower window
+    in
+    case model.flowerVisibility of
+        Entering ->
+            Keyed.node "div"
+                [ style [ backgroundColor Color.transparent ] ]
+                [ ( "flowers", flowerLayer.hidden ) ]
+
+        Visible ->
+            Keyed.node "div"
+                [ style
+                    [ windowDimensions window
+                    , backgroundColor flowerLayer.background
+                    , Transition.transition "background-color" 1000 [ Transition.linear, Transition.delay 500 ]
+                    ]
+                , class "relative flex items-center justify-center"
+                ]
+                [ ( "clear"
+                  , div
+                        [ onClick HideFlower
+                        , style [ width 20, height 20, opacity 0, Animation.animation "fade-in" 500 [ Animation.delay 500 ] ]
+                        , class "absolute top-1 right-1 z-7 pointer"
+                        ]
+                        [ cross ]
+                  )
+                , ( "flowers"
+                  , flowerLayer.visible
+                  )
+                , ( "text"
+                  , p
+                        [ style
+                            [ color Color.white
+                            , lineHeight 2
+                            , marginTop 150
+                            , maxWidth 350
+                            , paddingHorizontal 10
+                            , opacity 0
+                            , Animation.animation "fade-in" 1000 [ Animation.delay 1500 ]
+                            ]
+                        , class "f7 tracked absolute z-7"
+                        ]
+                        [ text flowerLayer.description ]
+                  )
+                ]
+
+        Leaving ->
+            Keyed.node "div"
+                [ style
+                    [ Animation.animation "fade-out" 1000 [ Animation.linear ]
+                    , windowDimensions window
+                    , backgroundColor flowerLayer.background
+                    ]
+                , class "touch-disabled"
+                ]
+                [ ( "flowers", flowerLayer.visible ) ]
+
+        Hidden ->
+            span [] []
+
+
+getFlowerLayer seedType window =
+    let
+        description =
+            flowerDescription seedType
+    in
+    case seedType of
+        Sunflower ->
+            { hidden = Sunflower.hidden window
+            , visible = Sunflower.visible window
+            , background = Sunflower.background
+            , description = description
+            }
+
+        Chrysanthemum ->
+            { hidden = Chrysanthemum.hidden window
+            , visible = Chrysanthemum.visible window
+            , background = Chrysanthemum.background
+            , description = description
+            }
+
+        Cornflower ->
+            { hidden = Cornflower.hidden window
+            , visible = Cornflower.visible window
+            , background = Cornflower.background
+            , description = description
+            }
+
+        _ ->
+            { hidden = Sunflower.hidden window
+            , visible = Sunflower.visible window
+            , background = Sunflower.background
+            , description = description
+            }
+
+
+
+-- Config
 
 
 type alias FlowerSpacing =
@@ -323,3 +462,19 @@ flowerSpacing seedType =
             , offsetX = 30
             , offsetY = 20
             }
+
+
+flowerDescription : SeedType -> String
+flowerDescription seedType =
+    case seedType of
+        Sunflower ->
+            "Sunflowers are native to North America but grow across the world. During growth their bright yellow flowers turn to face the sun. The flowers attract bees and their seeds are a food source for animals and humans."
+
+        Chrysanthemum ->
+            "Chrysanthemums are native to Aisa and northeastern Europe, with a huge variety in China. They bloom in early Autumn in many colours and shapes. In Acient China their roots were used as pain relief medicine."
+
+        Cornflower ->
+            "Cornflowers are a wildflower native to Europe. In the past their bright blue heads could be seen amongst fields of corn. They are now endangered in their natural habitat from Agricultural intensification."
+
+        _ ->
+            ""

@@ -103,7 +103,6 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     ( initialState flags
     , bounceKeyframes flags.window
-      -- , trigger InitGarden
     )
 
 
@@ -211,20 +210,6 @@ update msg ({ scene, backdrop } as model) =
 
         _ ->
             ( model, Cmd.none )
-
-
-withLoadingScreen : Msg -> Cmd Msg
-withLoadingScreen msg =
-    Delay.sequence
-        [ ( 0, ShowLoadingScreen )
-        , ( 1000, msg )
-        , ( 2000, HideLoadingScreen )
-        ]
-
-
-updateContext : Model -> (Context -> Context) -> Model
-updateContext model f =
-    { model | scene = Scene.map f model.scene }
 
 
 
@@ -508,8 +493,22 @@ syncContext model scene =
     Scene.map (always <| Scene.getContext model.scene) scene
 
 
+updateContext : Model -> (Context -> Context) -> Model
+updateContext model f =
+    { model | scene = Scene.map f model.scene }
+
+
 
 -- Misc
+
+
+withLoadingScreen : Msg -> Cmd Msg
+withLoadingScreen msg =
+    Delay.sequence
+        [ ( 0, ShowLoadingScreen )
+        , ( 1000, msg )
+        , ( 2000, HideLoadingScreen )
+        ]
 
 
 goToGarden : Cmd Msg
