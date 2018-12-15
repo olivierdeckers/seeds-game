@@ -1,7 +1,7 @@
 module Views.Animations exposing (animations)
 
 import Css.Animation as Animation exposing (frame, keyframes, opacity, transform)
-import Css.Transform exposing (rotateZ, scale, translateX, translateY)
+import Css.Transform exposing (rotateZ, scale, translate, translateX, translateY)
 import Html exposing (Html)
 
 
@@ -27,6 +27,10 @@ animations =
         , heartBreakLeft
         , heartBreakRight
         , scaleIn
+        , leftWing
+        , rightWing
+        , beeFlight
+        , verticalFlutter
         ]
 
 
@@ -222,6 +226,43 @@ scaleIn =
     keyframes "scale-in"
         [ frame 0 [ toScale 0 ]
         , frame 100 [ toScale 1 ]
+        ]
+
+
+beeFlight =
+    keyframes "bee-flight"
+        [ frame 0
+            [ transform [ translate 0 0 ], opacity 0 ]
+        , frame 10
+            [ transform [ translate 130 80 ], opacity 1 ]
+        , frame 90
+            [ transform [ translate 130 80 ], opacity 1 ]
+        , frame 100
+            [ transform [ translate 260 0 ], opacity 0 ]
+        ]
+
+
+verticalFlutter =
+    keyframes "vertical-flutter"
+        [ frame 0 [ transform [ translate 0 0 ] ]
+        , frame 50 [ transform [ translate 1 3 ] ]
+        , frame 100 [ transform [ translate 0 0 ] ]
+        ]
+
+
+leftWing =
+    keyframes "left-wing"
+        [ frame 0 [ transform [ rotateZ 0 ] ]
+        , frame 50 [ transform [ rotateZ 30 ] ]
+        , frame 100 [ transform [ rotateZ 0 ] ]
+        ]
+
+
+rightWing =
+    keyframes "right-wing"
+        [ frame 0 [ transform [ rotateZ 0 ] ]
+        , frame 50 [ transform [ rotateZ -30 ] ]
+        , frame 100 [ transform [ rotateZ 0 ] ]
         ]
 
 

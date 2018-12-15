@@ -1,12 +1,31 @@
-module Views.Sprites.Bee exposing (bee)
+module Views.Sprites.Bee exposing (bee, hovering)
 
+import Css.Animation as Animation
+import Css.Style as Style
+import Css.Transform as Transform
 import Helpers.Svg exposing (..)
 import Svg
 import Svg.Attributes exposing (..)
 
 
+hovering =
+    Svg.svg [ viewBox_ 0 0 280 100 ]
+        [ Svg.g
+            [ y_ 0
+            , Style.svgStyles
+                [ Animation.animation "bee-flight"
+                    4000
+                    [ Animation.linear
+                    , Animation.infinite
+                    ]
+                ]
+            ]
+            [ bee ]
+        ]
+
+
 bee =
-    Svg.svg [ viewBox_ 0 0 71 85 ]
+    Svg.svg [ viewBox_ 0 0 71 85, width_ 20, height_ 20 ]
         [ Svg.g [ transform "matrix(-1.56806 0 0 2.2802 5009.8 -4558)" ]
             [ Svg.clipPath [ id "bee-body" ] [ Svg.ellipse [ cx "3173.1", cy "2022.1", rx "20", ry "9.9" ] [] ]
             , Svg.g [ clipPath "url(#bee-body)" ]
