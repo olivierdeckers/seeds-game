@@ -54,6 +54,7 @@ module Css.Color exposing
     )
 
 import Css.Unit exposing (deg, pc)
+import String exposing (fromFloat, fromInt)
 
 
 type alias Color =
@@ -66,7 +67,7 @@ type alias Color =
 
 seedPodGradient : Color
 seedPodGradient =
-    linearGradient seedPodGradient_
+    "linear-gradient(" ++ seedPodGradient_ ++ ")"
 
 
 seedPodGradient_ : String
@@ -85,32 +86,31 @@ gradientStop stopColor percent =
     String.join " " [ stopColor, pc percent ]
 
 
-linearGradient : String -> String
-linearGradient x =
-    String.join "" [ "linear-gradient(", x, ")" ]
-
-
 rgba : Int -> Int -> Int -> Float -> Color
 rgba r g b a =
-    "rgba("
-        ++ String.join ","
-            [ String.fromInt r
-            , String.fromInt g
-            , String.fromInt b
-            , String.fromFloat a
-            ]
-        ++ ")"
+    let
+        rgbaString =
+            String.join ","
+                [ fromInt r
+                , fromInt g
+                , fromInt b
+                , fromFloat a
+                ]
+    in
+    "rgba(" ++ rgbaString ++ ")"
 
 
 rgb : Int -> Int -> Int -> Color
 rgb r g b =
-    "rgb("
-        ++ String.join ","
-            [ String.fromInt r
-            , String.fromInt g
-            , String.fromInt b
-            ]
-        ++ ")"
+    let
+        rgbString =
+            String.join ","
+                [ fromInt r
+                , fromInt g
+                , fromInt b
+                ]
+    in
+    "rgb(" ++ rgbString ++ ")"
 
 
 

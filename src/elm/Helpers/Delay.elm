@@ -5,8 +5,8 @@ import Task
 
 
 sequence : List ( Float, msg ) -> Cmd msg
-sequence steps =
-    Delay.sequence <| Delay.withUnit Delay.Millisecond <| steps
+sequence =
+    Delay.sequence << Delay.withUnit Delay.Millisecond
 
 
 after : Float -> msg -> Cmd msg
@@ -23,6 +23,5 @@ pause : Float -> List ( Float, msg ) -> List ( Float, msg )
 pause pauseDuration steps =
     steps
         |> List.head
-        |> Maybe.map (\( n, msg ) -> ( n + pauseDuration, msg ))
-        |> Maybe.map (\newDelay -> [ newDelay ] ++ List.drop 1 steps)
+        |> Maybe.map (\( n, msg ) -> ( n + pauseDuration, msg ) :: List.drop 1 steps)
         |> Maybe.withDefault []

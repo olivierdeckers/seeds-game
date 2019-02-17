@@ -246,7 +246,7 @@ growingStyles move =
 burstStyles : Int -> Block -> List Style
 burstStyles burstMagnitude block =
     if Block.isLeaving block && Block.isBurst block then
-        [ Animation.animation "bulge-fade-10" 800 [ Animation.cubicBezier 0 0 0 0.8 ]
+        [ Animation.animation "bulge-fade-10" 1000 [ Animation.cubicBezier 0 0.5 1 1.8 ]
         ]
 
     else if Block.isDragging block && Block.isBurst block then
