@@ -498,7 +498,7 @@ flowerDescription seedType =
             "Sunflowers are native to North America but bloom across the world. During growth their bright yellow flowers turn to face the sun. Their seeds are an important food source for both humans and animals."
 
         Chrysanthemum ->
-            "Chrysanthemums are native to Aisa and northeastern Europe, with the largest variety in China. They bloom early in Autumn, in many different colours and shapes. The Ancient Chinese used Chrysanthemum roots in pain relief medicine."
+            "Chrysanthemums are native to Asia and northeastern Europe, with the largest variety in China. They bloom early in Autumn, in many different colours and shapes. The Ancient Chinese used Chrysanthemum roots in pain relief medicine."
 
         Cornflower ->
             "Cornflowers are a wildflower native to Europe. In the past their bright blue heads could be seen amongst fields of corn. They are now endangered in their natural habitat from Agricultural intensification."
